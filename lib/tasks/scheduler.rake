@@ -5,3 +5,9 @@ task :update_channel_stats => :environment do
   TwitchStatsUpdater.update_channel_stats
   puts "done."
 end
+
+task :update_stream_stats => :environment do
+  puts "Updating stream stats..."
+  TwitchStatsUpdater.update_stream_stats
+  puts "done."
+end

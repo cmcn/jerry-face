@@ -14,9 +14,36 @@ class TwitchStatsUpdater
   end
 
   def self.update_stream_stats
+    last_session = StreamSession.last
     response = make_https_request("https://api.twitch.tv/kraken/streams/cumpp")
+    stream_data = response['stream']
+    channel_data = response['channel']
 
-    StreamStat.create()
+    if stream_data
+      if !last_session || last_session.end_time
+        StreamSession.create(
+          start_time: stream_data['created_at'],
+          game: stream_data['game'],
+          title: channel_data['status']
+        )
+      elsif last_session.game != stream_data['game']
+        last_session.update(end_time: stream_data['created_at'])
+
+        StreamSession.create(
+          start_time: stream_data['created_at'],
+          game: stream_data['game'],
+          title: channel_data['status']
+        )
+      end
+
+      ChannelStat.create(
+        followers: channel_data['followers'],
+        updated_at: DateTime.now,
+        views: channel_data['views']
+      )
+    else
+      last_session.update(end_time: DateTime.now) if last_session
+    end
   end
 
   private
